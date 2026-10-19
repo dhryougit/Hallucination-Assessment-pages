@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VHA: VQA-based Hallucination Assessment</title>
+  <meta name="description" content="VHA and VHA+: assessing hallucinations in generative image super-resolution with bidirectional visual question answering. Explore the method, VHA-bench, and model weights.">
+  <meta property="og:title" content="VHA: VQA-based Hallucination Assessment for Generative Image Super-Resolution">
+  <meta property="og:description" content="Are super-resolved details supported by the reference image? VHA measures hallucinations through bidirectional visual question answering.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dhryougit.github.io/Hallucination-Assessment-pages/">
+  <meta property="og:image" content="https://dhryougit.github.io/Hallucination-Assessment-pages/assets/overview-vha.png">
+  <meta name="theme-color" content="#167168">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="hero">
+    <h1><span class="accent">VHA:</span> VQA-based Hallucination Assessment<br class="desktop-break"> for Generative Image Super-Resolution</h1>
+    <p class="authors"><a href="https://doinghun.com/">Donghun Ryou<sup>2</sup></a><span>Inju Ha<sup>1</sup></span><span>Jaeyoo Park<sup>1</sup></span><span>Bohyung Han<sup>1,2</sup></span></p>
+    <p class="affiliation">Computer Vision Laboratory, <sup>1</sup>ECE &amp; <sup>2</sup>IPAI<br>Seoul National University</p>
+    <div class="resource-buttons" aria-label="Project resources">
+      <a class="button" href="https://github.com/dhryougit/Hallucination-Assessment"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5 1 12l7 7M16 5l7 7-7 7M14 3l-4 18"/></svg>Code <span class="button-detail">private</span></a>
+      <a class="button" href="https://drive.google.com/drive/folders/1TEYDmms1CQNUDWjwVxNcQdwyYXveg32D?usp=drive_link"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></svg>VHA-bench</a>
+      <a class="button" href="https://drive.google.com/file/d/19jOvo8LR7HeXva0y0ub2LY0WxEeabxxI/view?usp=drive_link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v13m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Model weights</a>
+    </div>
+    <p class="tldr">Assessing whether generated details remain grounded in the reference image,<br class="desktop-break"> through <strong>bidirectional visual question answering.</strong></p>
+  </header>
+
+  <main id="main">
+    <section class="examples section" aria-labelledby="examples-title">
+      <h2 id="examples-title">Realistic details can still be hallucinations.</h2>
+      <p class="section-intro">Visual quality and pixel similarity do not tell the whole story. Compare the reference with two super-resolved outputs.</p>
+      <div class="example-switch" role="group" aria-label="Select a visual example">
+        <button type="button" aria-pressed="true" data-example="scene">Scene structure</button>
+        <button type="button" aria-pressed="false" data-example="texture">Fine texture</button>
+      </div>
+      <div id="scene" class="example-panel">
+        <div class="image-grid">
+          <figure><img src="assets/santorini_gt.jpg" width="512" height="512" alt="Ground-truth Santorini scene with a white building among rocks"><figcaption>Ground truth</figcaption></figure>
+          <figure><img src="assets/santorini_stablesr_seed42.jpg" width="512" height="512" alt="StableSR output changing the building into a rock-like formation"><figcaption>StableSR</figcaption></figure>
+          <figure><img src="assets/santorini_diffbir_seed45.jpg" width="512" height="512" alt="DiffBIR output retaining the building structure"><figcaption>DiffBIR</figcaption></figure>
+        </div>
+        <p class="example-caption">PSNR favors StableSR, although it changes the building into a rock-like formation. VHA and VHA+ favor the more faithful DiffBIR output.</p>
+      </div>
+      <div id="texture" class="example-panel" hidden>
+        <div class="image-grid">
+          <figure><img src="assets/knit_gt_bright.jpg" width="512" height="512" alt="Ground-truth knitted fabric texture"><figcaption>Ground truth</figcaption></figure>
+          <figure><img src="assets/knit_diffbir_bright.jpg" width="512" height="512" alt="DiffBIR output with a changed knitting pattern"><figcaption>DiffBIR</figcaption></figure>
+          <figure><img src="assets/knit_pure_bright.jpg" width="512" height="512" alt="PURE output with a knitting pattern closer to the reference"><figcaption>PURE</figcaption></figure>
+        </div>
+        <p class="example-caption">MUSIQ favors DiffBIR even though it changes the knitted texture. VHA and VHA+ favor PURE. The same display correction is applied to all three images.</p>
+      </div>
+    </section>
+
+    <section class="section abstract" aria-labelledby="abstract-title">
+      <h2 id="abstract-title">Abstract</h2>
+      <p>Generative image super-resolution produces visually realistic high-resolution images, but may also introduce hallucinations by adding unsupported content or altering existing details. Because existing super-resolution metrics fail to measure whether generated details remain grounded in the reference image, we present a hallucination assessment technique based on bidirectional visual question answering (VQA), which we term VQA-based Hallucination Assessment (VHA). The proposed approach uses a vision-language model (VLM) to determine whether the semantic content and low-level visual evidence in a super-resolved image are supported by its ground-truth counterpart. To this end, it constructs question–answer pairs from each image and evaluates them on both images. Discrepancies between the resulting scores in both directions reveal missing or altered ground-truth information and unsupported additions. However, obtaining these scores requires computationally expensive VLM inference. We therefore develop VHA+, a learned, lightweight model that directly predicts VHA scores from ground-truth and super-resolved image pairs. We construct a hallucination benchmark, VHA-bench, through a human study and show that both VHA and VHA+ correlate highly with human judgments of hallucination.</p>
+    </section>
+
+    <section class="section" aria-labelledby="method-title">
+      <h2 id="method-title">VHA: evaluating evidence in both directions</h2>
+      <p class="section-intro">Generate questions about semantics and visual attributes, then compare answer support under the ground-truth and super-resolved images.</p>
+      <figure class="framework"><a href="assets/overview-vha.png" aria-label="Open full-size VHA framework diagram"><img src="assets/overview-vha.png" alt="VHA pipeline: discover high- and low-level evidence, generate Q/A pairs from GT and SR images, compare answer log probabilities, and aggregate a bidirectional hallucination score" loading="lazy" width="2200" height="1046"></a><figcaption>GT-origin questions assess lost or altered evidence. SR-origin questions assess unsupported additions. Click the diagram to view it at full resolution.</figcaption></figure>
+      <div class="direction-grid"><div><h3>Ground truth → Super-resolution</h3><p>Is the original content preserved in the generated image?</p></div><div><h3>Super-resolution → Ground truth</h3><p>Are the generated details supported by the reference?</p></div></div>
+    </section>
+
+    <section class="section" aria-labelledby="fast-title">
+      <h2 id="fast-title">VHA+: direct assessment without VLM inference</h2>
+      <p class="section-intro">A lightweight model learns from VHA-labeled image pairs and predicts hallucination scores using a shared DINOv3 encoder.</p>
+      <figure class="framework"><a href="assets/overview-vhaplus.png" aria-label="Open full-size VHA+ framework diagram"><img src="assets/overview-vhaplus.png" alt="VHA+ training: construct image pairs labeled by VHA, encode both images with shared DINOv3, and learn to predict scores from CLS feature distance" loading="lazy" width="2000" height="775"></a><figcaption>VHA supplies the supervision; VHA+ predicts scores directly from an image pair.</figcaption></figure>
+      <p class="runtime"><strong>17.1 ms / pair</strong> <span>VHA+ model-call time on an NVIDIA RTX A6000, at 512 × 512 resolution and batch size 1. VHA takes approximately 101 s / pair under the same hardware setting; loading and disk I/O are excluded.</span></p>
+    </section>
+
+    <section class="section" aria-labelledby="benchmark-title">
+      <h2 id="benchmark-title">VHA-bench</h2>
+      <p class="section-intro">A human-annotated hallucination benchmark built from RealSR references and six generative super-resolution methods.</p>
+      <dl class="stats"><div><dt>90</dt><dd>reference images</dd></div><div><dt>6</dt><dd>generative SR methods</dd></div><div><dt>540</dt><dd>GT–SR image pairs</dd></div><div><dt>200</dt><dd>study participants</dd></div></dl>
+      <p class="benchmark-description">StableSR · DiffBIR · SeeSR · OSEDiff · PURE · VOSR<br>Human judgments assess missing or altered reference evidence and unsupported additions.</p>
+      <h3 class="table-title">Correlation with human hallucination judgments</h3>
+      <div class="table-wrap"><table><caption class="sr-only">Spearman and Pearson correlation on VHA-bench. Higher is better for both columns.</caption><thead><tr><th scope="col">Method</th><th scope="col">Spearman ↑</th><th scope="col">Pearson ↑</th></tr></thead><tbody>
+        <tr><th scope="row">PSNR</th><td>0.162</td><td>0.181</td></tr>
+        <tr><th scope="row">SSIM</th><td>0.010</td><td>0.012</td></tr>
+        <tr><th scope="row">LPIPS</th><td>0.083</td><td>0.089</td></tr>
+        <tr><th scope="row">DISTS</th><td>0.066</td><td>0.069</td></tr>
+        <tr><th scope="row">DINO</th><td>0.081</td><td>0.115</td></tr>
+        <tr><th scope="row">CLIP</th><td>0.282</td><td>0.273</td></tr>
+        <tr><th scope="row">MUSIQ</th><td>−0.008</td><td>−0.014</td></tr>
+        <tr><th scope="row">CLIP-IQA</th><td>0.168</td><td>0.159</td></tr>
+        <tr><th scope="row">Q-Insight</th><td>0.080</td><td>0.036</td></tr>
+        <tr><th scope="row">VQ-R1</th><td>0.175</td><td>0.126</td></tr>
+        <tr><th scope="row">DeQA</th><td>0.145</td><td>0.156</td></tr>
+        <tr><th scope="row">A-FINE</th><td>0.173</td><td>0.299</td></tr>
+        <tr class="group-start"><th scope="row">Direct rating</th><td>0.497</td><td>0.482</td></tr>
+        <tr><th scope="row">HS prompting</th><td>0.543</td><td>0.563</td></tr>
+        <tr class="ours group-start"><th scope="row">VHA (Ours)</th><td>0.618</td><td>0.645</td></tr>
+        <tr class="ours best"><th scope="row">VHA+ (Ours)</th><td>0.659</td><td>0.675</td></tr>
+      </tbody></table></div>
+      <p class="table-note">Direct rating, HS prompting, and VHA use Qwen3-VL-8B-Instruct. VHA+ uses a learned DINOv3 model.</p>
+      <p class="center"><a class="text-link" href="https://drive.google.com/drive/folders/1TEYDmms1CQNUDWjwVxNcQdwyYXveg32D?usp=drive_link">Download VHA-bench <span aria-hidden="true">↗</span></a></p>
+    </section>
+
+    <section class="section citation" aria-labelledby="citation-title">
+      <div class="citation-heading"><h2 id="citation-title">BibTeX</h2><button type="button" class="copy-button" id="copy-citation">Copy</button></div>
+      <pre><code id="bibtex">@misc{ryou2026vha,
+  title={VHA: VQA-based Hallucination Assessment for
+         Generative Image Super-Resolution},
+  author={Ryou, Donghun and Ha, Inju and Park, Jaeyoo
+          and Han, Bohyung},
+  year={2026},
+  url={https://dhryougit.github.io/Hallucination-Assessment-pages/}
+}</code></pre>
+      <span id="copy-status" class="sr-only" role="status"></span>
+    </section>
+  </main>
+  <footer><p>VHA · VQA-based Hallucination Assessment</p><p>Page layout inspired by <a href="https://hij1112.github.io/beyond-the-ground-truth/">Beyond the Ground Truth</a>.</p></footer>
+</body>
+</html>
